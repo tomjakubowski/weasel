@@ -40,6 +40,7 @@
 (defn enable-repl-print!
   "Set *print-fn* to print in the connected REPL"
   []
+  (set! *print-newline* true)
   (set! *print-fn* repl-print))
 
 (defn connect
