@@ -66,8 +66,7 @@
   [_ message]
   (let [string (:value message)]
     (binding [*out* (or @repl-out *out*)]
-      (print (read-string string))
-      (flush))))
+      (print (read-string string)))))
 
 (defmethod process-message
   :ready
