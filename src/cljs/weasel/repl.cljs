@@ -32,10 +32,15 @@
                                (.-stack e)
                                ("No stacktrace available."))}))}))
 
-(defn repl-print
+(defn- repl-print
   [x]
   (if-let [conn @ws-connection]
     (net/transmit @ws-connection {:op :print :value (pr-str x)})))
+
+(defn enable-repl-print!
+  "Set *print-fn* to print in the connected REPL"
+  []
+  (set! *print-fn* repl-print))
 
 (defn connect
   [repl-server-url & {:keys [verbose]}]
@@ -45,6 +50,7 @@
     (event/listen repl-connection :opened
       (fn [evt]
         (net/transmit repl-connection (pr-str {:op :ready}))
+        (enable-repl-print!)
         (when verbose (.info js/console "Opened Websocket REPL connection"))))
 
     (event/listen repl-connection :message

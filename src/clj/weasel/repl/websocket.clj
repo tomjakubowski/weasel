@@ -76,8 +76,7 @@
   (env/with-compiler-env (::env/compiler renv)
     (binding [*out* (or @repl-out *out*)]
       (send-for-eval! (cljsc/compile-form-seq
-                        '[(ns cljs.user)
-                          (set-print-fn! weasel.repl/repl-print)])))))
+                        '[(ns cljs.user)])))))
 
 (defn- websocket-setup-env
   [this]
