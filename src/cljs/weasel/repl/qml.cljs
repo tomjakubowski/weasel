@@ -46,35 +46,42 @@
    3 :Closed
    4 :Error})
 
-(defn create-ws [parent]
+(defn ^:export connect [qml-parent repl-server-url & {:keys [verbose on-open on-error on-close]}]
   (let [ws
         (.createQmlObject
          js/Qt
-         "import Qt.WebSockets 1.0; WebSocket {url: \"ws://localhost:9001\"}"
+         (str "import Qt.WebSockets 1.0; WebSocket {url: \"" repl-server-url "\"}")
          ;;"import Qt.WebSockets 1.0; WebSocket {}"
-         parent
+         qml-parent
          "weasel.repl.qml.websocket")]
-    (.log js/console (ws-status (.-status ws)))
-    (.log js/console (ws-status (.-active ws)))
-    (.log js/console (.-url ws))
+    (reset! ws-connection ws)
     (.connect (.-onStatusChanged ws)
               (fn [status]
                 (let [status (ws-status status)]
-                  (.log js/console (str "Status: " status))
                   (cond
                    (= status :Open)
-                   (.sendTextMessage ws (pr-str {:op :ready}))
+                   (do
+                     (.sendTextMessage ws (pr-str {:op :ready}))
+                     (when verbose (.info js/console "Opened Websocket REPL connection"))
+                     (when (fn? on-open) on-open )
+                     )
 
                    (= status :Closed)
-                   (set! (.-active ws) true)
+                   (do
+                     (reset! ws-connection nil)
+                     (when verbose (.info js/console "Closed Websocket REPL connection"))
+                     (when (fn? on-close) (on-close)))
 
                    (= status :Error)
-                   (.error js/console "WebSocket error" (.-errorString ws))))))
+                   (do
+                     (.error js/console "WebSocket error" (.-errorString ws))
+                     (when (fn? on-error) (on-error (.-errorString ws))))))))
     (.connect (.-onTextMessageReceived ws)
               (fn [msg]
-                (.log js/console (str "Received: " msg))
+                (when verbose (.log js/console (str "Received: " msg)))
                 (let [{:keys [op] :as message} (read-string msg)
                       response (-> message process-message pr-str)]
+                  (when verbose (.log js/console (str "Sending: " response)))
                   (.sendTextMessage ws response))))
     (set! (.-active ws) true)
     ws))
