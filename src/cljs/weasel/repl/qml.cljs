@@ -1,6 +1,7 @@
 (ns weasel.repl.qml
   (:require
-   [cljs.reader :as reader :refer [read-string]]))
+   [cljs.reader :as reader :refer [read-string]]
+   [weasel.impls.print :as wp]))
 
 (def ^:private ws-connection (atom nil))
 
@@ -46,25 +47,28 @@
    3 :Closed
    4 :Error})
 
-(defn ^:export connect [qml-parent repl-server-url & {:keys [verbose on-open on-error on-close]}]
-  (let [ws
+(defn connect [qml-parent repl-server-url & {:keys [verbose on-open on-error on-close]}]
+  "Connects to a Weasel REPL socket at the provided repl-server-url. The underlying implementation
+depends on Qt.WebSockets (found in Qt 5.3 or higher). Because this is a Qml object it requires
+a non-nil parent object passed in as qml-parent."
+  (let [repl-connection
         (.createQmlObject
          js/Qt
          (str "import Qt.WebSockets 1.0; WebSocket {url: \"" repl-server-url "\"}")
          ;;"import Qt.WebSockets 1.0; WebSocket {}"
          qml-parent
          "weasel.repl.qml.websocket")]
-    (reset! ws-connection ws)
-    (.connect (.-onStatusChanged ws)
+    (swap! ws-connection (constantly repl-connection))
+    (swap! wp/print-fn (constantly repl-print))
+    (.connect (.-onStatusChanged repl-connection)
               (fn [status]
                 (let [status (ws-status status)]
                   (cond
                    (= status :Open)
                    (do
-                     (.sendTextMessage ws (pr-str {:op :ready}))
+                     (.sendTextMessage repl-connection (pr-str {:op :ready}))
                      (when verbose (.info js/console "Opened Websocket REPL connection"))
-                     (when (fn? on-open) on-open )
-                     )
+                     (when (fn? on-open) (on-open)))
 
                    (= status :Closed)
                    (do
@@ -74,14 +78,14 @@
 
                    (= status :Error)
                    (do
-                     (.error js/console "WebSocket error" (.-errorString ws))
-                     (when (fn? on-error) (on-error (.-errorString ws))))))))
-    (.connect (.-onTextMessageReceived ws)
+                     (.error js/console "WebSocket error" (.-errorString repl-connection))
+                     (when (fn? on-error) (on-error (.-errorString repl-connection))))))))
+    (.connect (.-onTextMessageReceived repl-connection)
               (fn [msg]
                 (when verbose (.log js/console (str "Received: " msg)))
                 (let [{:keys [op] :as message} (read-string msg)
                       response (-> message process-message pr-str)]
                   (when verbose (.log js/console (str "Sending: " response)))
-                  (.sendTextMessage ws response))))
-    (set! (.-active ws) true)
-    ws))
+                  (.sendTextMessage repl-connection response))))
+    (set! (.-active repl-connection) true)
+    repl-connection))
