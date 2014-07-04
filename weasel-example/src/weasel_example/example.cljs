@@ -2,5 +2,4 @@
   (:require [weasel.repl :as repl]))
 
 (if-not (repl/alive?)
-  (repl/connect "ws://localhost:9001"
-    :verbose true))
+  (repl/connect "ws://localhost:9001"))

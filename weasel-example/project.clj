@@ -7,7 +7,7 @@
 
   :dependencies [[org.clojure/clojure "1.5.1"]
                  [org.clojure/clojurescript "0.0-2202"]
-                 [weasel "0.2.1"]]
+                 [weasel "0.3.0"]]
 
   :source-paths ["src"]
   :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.1.3"]]

@@ -11,3 +11,4 @@ pom.xml
 .repl
 /checkouts
 .nrepl-port
+/pom.xml.asc
