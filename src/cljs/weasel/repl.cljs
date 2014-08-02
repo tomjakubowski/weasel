@@ -2,7 +2,8 @@
   (:require [clojure.browser.event :as event :refer [event-types]]
             [clojure.browser.net :as net]
             [cljs.reader :as reader :refer [read-string]]
-            [weasel.impls.websocket :as ws]))
+            [weasel.impls.websocket :as ws]
+            [weasel.impls.print :as wp]))
 
 (def ^:private ws-connection (atom nil))
 
@@ -45,6 +46,7 @@
   [repl-server-url & {:keys [verbose on-open on-error on-close] :or {verbose true}}]
   (let [repl-connection (ws/websocket-connection)]
     (swap! ws-connection (constantly repl-connection))
+    (swap! wp/print-fn (constantly repl-print))
 
     (event/listen repl-connection :opened
       (fn [evt]
