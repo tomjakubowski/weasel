@@ -17,7 +17,7 @@
                               [:name "Tom Jakubowski"]
                               [:email "tom@crystae.net"]
                               [:url "https://github.com/tomjakubowski"]]]
-  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.1.5"]]}}
+  :profiles {:dev {:dependencies [[com.cemerick/piggieback "0.2.0"]]}}
   :source-paths ["src/clj" "src/cljs"]
   :scm {:name "git"
         :url "https://github.com/tomjakubowski/weasel"})
