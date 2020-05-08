@@ -20,7 +20,7 @@
   ([auto-reconnect?]
      (websocket-connection auto-reconnect? nil))
   ([auto-reconnect? next-reconnect-fn]
-     (goog.net.WebSocket. auto-reconnect? next-reconnect-fn)))
+     (goog.net.WebSocket. (or auto-reconnect? false) (or next-reconnect-fn false))))
 
 (extend-type goog.net.WebSocket
   IWebSocket
